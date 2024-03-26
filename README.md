@@ -1,6 +1,6 @@
-# yumi_ros
+# yumi
 ABB YuMi IRB 14000 ROS Architeture
-> This repo is a variant of the original [KTH-RPL](https://github.com/kth-ros-pkg/yumi), that works with `ROS-Noetic`.
+> This repo is a fork of the [yumi ros interface repo](https://github.com/bhomaidan1990/yumi_ros) dealing with the ROS Noetic distribution
 
 ## ROS Installation
 
@@ -40,26 +40,35 @@ sudo apt-get install \
         ros-$ROS_DISTRO-hector-xacro-tools
 ```
 Then:
-```
-pip3 install --user pyftpdlib
-pip3 install --user --upgrade pyassimp
 
-```
+    pip3 install --user pyftpdlib
+    pip3 install --user --upgrade pyassimp
+
 
 ## Quick Start
 
-```
-mkdir -p ~/yumi_ws/src && cd ~/yumi_ws/src
-git clone --recursive https://github.com/bhomaidan1990/yumi_ros.git
-git clone https://github.com/ros-industrial/abb_driver.git
-git clone https://github.com/ros-industrial/industrial_core.git
-cd ..
-rosdep install --from-paths src --ignore-src -r -y
-```
+
+    mkdir -p ~/ws_yumi/src && cd ~/ws_yumi/src
+    git clone --recursive https://github.com/maxencegrand/yumi.git
+    git clone https://github.com/ros-industrial/abb_driver.git
+    git clone https://github.com/ros-industrial/industrial_core.git
+    cd ..
+    rosdep install --from-paths src --ignore-src -r -y
+
 
 ### Network Setup:
 
 Please be sure to follow the [Network Setup Instructions](https://github.com/kth-ros-pkg/yumi/wiki/Network-setup)
+
+## Running moveit demo
+
+### Running RViz Simulation
+
+    cd ~/ws_yumi
+    . devel/setup.bash
+    roslaunch yumi_moveit_config demo.launch
+
+
 
 ## Running the Robot
 
@@ -67,9 +76,8 @@ Please set the main pointer at the FlexPendant to main for the `Rob_L` and `Rob_
 
 To run RVIZ with moveit:
 - After you connect to YuMi (which should be running and motors on in Automatic mode):
-```
-cd ~/yumi_ws && catkin b -DCMAKE_BUILD_TYPE=RELEASE && . devel/setup.bash
-cd src/yumi_ros/yumi_description/urdf/
-rosrun xacro xacro yumi.urdf.xacro arms_interface:=VelocityJointInterface grippers_interface:=EffortJoinInterface yumi_setup:=robot_centric -o yumi.urdf
-roslaunch yumi_moveit_config myLaunch.launch
-```
+
+    cd ~/ws_yumi && catkin b -DCMAKE_BUILD_TYPE=RELEASE && . devel/setup.bash
+    cd src/yumi_ros/yumi_description/urdf/
+    rosrun xacro xacro yumi.urdf.xacro arms_interface:=VelocityJointInterface grippers_interface:=EffortJoinInterface yumi_setup:=robot_centric -o yumi.urdf
+    roslaunch yumi_moveit_config myLaunch.launch

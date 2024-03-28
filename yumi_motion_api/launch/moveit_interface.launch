@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node
+      name="moveit_interface"
+      pkg="yumi_motion_api"
+      type="moveit_interface.py"
+      respawn="false"
+      output="screen"
+  />
+
+</launch>

@@ -4,4 +4,3 @@ project(yumi_moveit_config)
 find_package(catkin REQUIRED)
 
 catkin_package()
-

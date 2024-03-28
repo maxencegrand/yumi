@@ -1,13 +1,13 @@
 <launch>
   <!-- The planning and execution components of MoveIt! configured to run -->
   <!-- using the ROS-Industrial interface. -->
- 
+
   <!-- Non-standard joint names:
        - Create a file [robot_moveit_config]/config/joint_names.yaml
-           controller_joint_names: [joint_1, joint_2, ... joint_N] 
+           controller_joint_names: [joint_1, joint_2, ... joint_N]
        - Update with joint names for your robot (in order expected by rbt controller)
        - and uncomment the following line: -->
- 
+
   <!-- Initialize Arguments -->
   <arg name="sim" default="false"/> <!-- argument for running as a simulation instead of on the real robot controller -->
   <arg name="robot_ip" default="192.168.125.1"/> <!-- argiment for the IP address of YuMi -->
@@ -15,7 +15,7 @@
   <arg name="gazebo" default="false"/> <!-- argument to lrun gazebo -->
 
   <!-- Load Joint Names to ROS Parameter Server -->
-  <group> 
+  <group>
     <rosparam command="load" file="$(find yumi_support)/config/joint_names_left.yaml"/>
     <rosparam command="load" file="$(find yumi_support)/config/joint_names_right.yaml"/>
   </group>
@@ -36,7 +36,7 @@
     <rosparam param="source_list">["/yumi/joint_states", "/yumi/gripper_states"]</rosparam>
   </node>
   <node name="yumi_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-	
+
   <!-- Call Gazebo -->
   <group if="$(arg gazebo)">
     <include file="$(find gazebo_ros)/launch/empty_world.launch">

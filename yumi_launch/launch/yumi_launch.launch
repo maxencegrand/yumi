@@ -37,8 +37,8 @@
 
     <!-- EGM hardware interface (i.e. 'ros_control'-based interface for interacting with mechanical units) -->
     <include file="$(find abb_egm_hardware_interface)/launch/egm_hardware_interface.launch">
-      <arg name="base_config_file" value="$(find yumi_launch)/config/ex3_hardware_base.yaml"/>
-      <arg name="egm_config_file" value="$(find yumi_launch)/config/ex3_hardware_egm.yaml"/>
+      <arg name="base_config_file" value="$(find yumi_launch)/config/hardware_base.yaml"/>
+      <arg name="egm_config_file" value="$(find yumi_launch)/config/hardware_egm.yaml"/>
     </include>
 
     <!-- Put 'ros_control' components in the "egm" namespace (to match the hardware interface) -->

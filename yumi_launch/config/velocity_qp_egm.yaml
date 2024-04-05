@@ -1,0 +1,46 @@
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 250
+
+egm_state_controller:
+  type         : abb_egm_state_controller/EGMStateController
+  publish_rate : 250
+  
+velocity_qp_left:
+  type: velocity_qp/YuMiController
+  arm_id: left_arm
+  joint_names:
+    - yumi_robl_joint_1
+    - yumi_robl_joint_2
+    - yumi_robl_joint_3
+    - yumi_robl_joint_4
+    - yumi_robl_joint_5
+    - yumi_robl_joint_6
+    - yumi_robl_joint_7
+  control_level : velocity
+  tip_link : "gripper_l_finger_r"
+  p_gains: [10, 10, 10, 10, 10, 10] 
+  p_gains_qd: [5, 5, 5, 5, 5, 5, 5] 
+  q_mean : [0.01 , -0.875, 0.0, -0.355, 0.0, 0.435, 0.0] # mean pos in radian
+  #  qdd_max : [15 , 7.5 , 10 , 12.5 , 15 , 20 , 20] # max acceleration, yumi has max vel, but not max ACC!
+  regularisation_weight : 1.0e-5
+
+velocity_qp_right:
+  type: velocity_qp/YuMiController
+  arm_id: right_arm
+  joint_names:
+    - yumi_robr_joint_1
+    - yumi_robr_joint_2
+    - yumi_robr_joint_3
+    - yumi_robr_joint_4
+    - yumi_robr_joint_5
+    - yumi_robr_joint_6
+    - yumi_robr_joint_7
+  control_level : velocity
+  tip_link : "gripper_r_finger_r"
+  p_gains: [10, 10, 10, 10, 10, 10] 
+  p_gains_qd: [5, 5, 5, 5, 5, 5, 5] 
+  q_mean : [0.01 , -0.875, 0.0, -0.355, 0.0, 0.435, 0.0] # mean pos in radian
+  #  qdd_max : [15 , 7.5 , 10 , 12.5 , 15 , 20 , 20] # max acceleration, yumi has max vel, but not max ACC!
+  regularisation_weight : 1.0e-5
+  

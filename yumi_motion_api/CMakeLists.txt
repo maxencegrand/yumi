@@ -51,19 +51,22 @@ catkin_python_setup()
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  YuMiJointsCmd.srv
+  YuMiPoseCmd.srv
+  YuMiPickPlace.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+)
+
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -107,11 +110,20 @@ catkin_python_setup()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
+# Declare catkin package
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES yumi_motion_api
-#  CATKIN_DEPENDS geometry_msgs moveit_core moveit_ros_planning_interface rospy rospy_message_converter sensor_msgs std_msgs tf
-#  DEPENDS system_lib
+  CATKIN_DEPENDS
+  rospy
+  std_msgs
+  tf
+  geometry_msgs
+  sensor_msgs
+  moveit_core
+  moveit_ros_planning_interface
+  rospy_message_converter
+  yumi_launch
+  message_runtime
+  # LIBRARIES ${PROJECT_NAME}
 )
 
 ###########
@@ -167,6 +179,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/moveit_interface.py
   scripts/yumi_utils.py
+  nodes/yumi_motion_api_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

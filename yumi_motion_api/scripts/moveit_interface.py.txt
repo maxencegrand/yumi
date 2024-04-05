@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+""" A moveit interface to control Yumi."""
+
+__author__ = "Belal Hmedan"
+__copyright__ = "TODO"
+__credits__ = ["TODO"]
+__license__ = "TODO"
+__version__ = "0.0.1"
+__maintainer__ = "Maxence Grand"
+__email__ = "Maxence.Grand@univ-grenoble-alpes.fr"
+__status__ = "Under Developpement"
+
+from six.moves import input
+
+import sys
+import copy
+import rospy
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+import tf
+import time
+
+from math import pi, tau, dist, fabs, cos, degrees
+import std_msgs.msg
+from geometry_msgs.msg import *
+from sensor_msgs.msg import *
+from moveit_msgs.msg import *
+from moveit_commander import *
+from moveit_commander.conversions import pose_to_list
+from abb_rapid_sm_addin_msgs.srv import *
+from abb_robot_msgs.srv import *
+from abb_robot_msgs.msg import *
+from controller_manager_msgs.srv import *
+
+from yumi_motion_api.yumi_utils import Yumi
+
+CALIB = {
+    "left": [0.0, -2.2699, 2.3561, 0.5224, 0.0033, 0.6971, 0.0035, 0.0],
+    "right": [0.0042, -2.2704, -2.353, 0.5187, -0.0048, 0.6965, 0.0051, 0.0]
+}
+
+def get_orientation_from_lego_orientation(horizontal=True):
+    return [pi, 0, 0] if horizontal else [pi, 0, pi/2]
+
+def create_pose_euler(x_p, y_p, z_p, roll_rad, pitch_rad, yaw_rad):
+    """Creates a pose using euler angles
+
+    Creates a pose for use with MoveIt! using XYZ coordinates and RPY
+    orientation in radians
+
+    @param x_p The X-coordinate for the pose
+    @param y_p The Y-coordinate for the pose
+    @param z_p The Z-coordinate for the pose
+    @param roll_rad The roll angle for the pose
+    @param pitch_rad The pitch angle for the pose
+    @param yaw_rad The yaw angle for the pose
+    @returns Pose
+    @rtype PoseStamped
+    """
+    quaternion = tf.transformations.quaternion_from_euler(roll_rad, pitch_rad, yaw_rad)
+    return create_pose(x_p, y_p, z_p, quaternion[0], quaternion[1], quaternion[2], quaternion[3])
+
+
+def create_pose(x_p, y_p, z_p, x_o, y_o, z_o, w_o):
+    """Creates a pose using quaternions
+
+    Creates a pose for use with MoveIt! using XYZ coordinates and XYZW
+    quaternion values
+
+    @param x_p The X-coordinate for the pose
+    @param y_p The Y-coordinate for the pose
+    @param z_p The Z-coordinate for the pose
+    @param x_o The X-value for the orientation
+    @param y_o The Y-value for the orientation
+    @param z_o The Z-value for the orientation
+    @param w_o The W-value for the orientation
+    @returns Pose
+    @rtype PoseStamped
+    """
+    pose_target = geometry_msgs.msg.Pose()
+    pose_target.position.x = x_p
+    pose_target.position.y = y_p
+    pose_target.position.z = z_p
+    pose_target.orientation.x = x_o
+    pose_target.orientation.y = y_o
+    pose_target.orientation.z = z_o
+    pose_target.orientation.w = w_o
+
+    return pose_target
+
+class MoveItInterface(object):
+    """MoveItInterface"""
+
+    def __init__(self):
+        super(MoveItInterface, self).__init__()
+        self.sys_init()
+        self.motion_init()
+
+
+    def print_status(self):
+        """Print Status"""
+        self.yumi.print_status()
+
+    # def sys_init(self):
+    #     """
+    #     Initialize the system, auto_mode, motors_on, rapid_running,
+    #     egm_settings_adjusted
+    #     """
+    #     auto_mode = True # system_info.auto_mode #
+    #     # rapid_running = system_info.rapid_running
+    #     motors_on = False # system_info.motors_on #
+    #     # print(auto_mode, motors_on)
+    #
+    #     if(not auto_mode):
+    #         print("xxxxxxxxxxxxx Robot in Manual Mode! Can't Initialize! xxxxxxxxxxxxx")
+    #         sys.exit()
+    #     else:
+    #         # Reset Program Pointer to main and Start RAPID
+    #         rospy.wait_for_service('/yumi/rws/pp_to_main')
+    #         rospy.wait_for_service('/yumi/rws/stop_rapid')
+    #         rospy.wait_for_service('/yumi/rws/start_rapid')
+    #         # set_motors_off= rospy.ServiceProxy("/yumi/rws/set_motors_off",TriggerWithResultCode)
+    #         self.stop_rapid    = rospy.ServiceProxy("/yumi/rws/stop_rapid"   , TriggerWithResultCode)
+    #         self.pp_to_main    = rospy.ServiceProxy("/yumi/rws/pp_to_main"   , TriggerWithResultCode)
+    #         self.start_rapid   = rospy.ServiceProxy("/yumi/rws/start_rapid"  , TriggerWithResultCode)
+    #         # Call the functionalities
+    #         self.stop_rapid()
+    #         self.pp_to_main()
+    #         time.sleep(1)
+    #         self.start_rapid()
+    #         # Turn Motors On
+    #         if(not motors_on):
+    #             rospy.wait_for_service('/yumi/rws/set_motors_on')
+    #             self.set_motors_on = rospy.ServiceProxy("/yumi/rws/set_motors_on", TriggerWithResultCode)
+    #             self.set_motors_on()
+
+    def motion_init(self):
+        """Init motion interface"""
+        self.scene = PlanningSceneInterface()
+        rospy.init_node("moveit_interface", anonymous=True)
+        print("============ Node moveit_interface Initialized")
+        rospy.sleep(2)
+
+        self.yumi = Yumi()
+        self.add_scene_table()
+        # self.add_block(
+        #     Block(0,[4,4],[5,4],[5,5],[4,5])
+        # )
+        # self.add_block(
+        #     Block(1,[24,11],[25,11],[25,12],[24,12])
+        # )
+        # self.add_block(
+        #     Block(2,[45,23],[48,23],[48,24],[45,24])
+        # )
+        # rospy.sleep(3)
+        self.calibrateGrippers()
+
+
+    # def add_block(self, block):
+    #     """Add block in the scene"""
+    #     block_name = f"block_{block.id}"
+    #     self.scene.remove_world_object(block_name)
+    #     self.scene.add_box(
+    #         block_name,
+    #         block.get_real_position(self.yumi),
+    #         block.get_dimension())
+
+    def add_scene_table(self):
+        """Add a table on the scene"""
+        self.scene.remove_world_object("table")
+        p = PoseStamped()
+        p.header.frame_id = self.yumi.robot.get_planning_frame()
+        p.header.stamp = rospy.Time.now()
+        p.pose.position.x = 0.405
+        p.pose.position.y = 0.000
+        p.pose.position.z = 0.050 # Table Height
+        p.pose.orientation.x = 0.0
+        p.pose.orientation.y = 0.0
+        p.pose.orientation.z = 0.0
+        p.pose.orientation.w = 1.0
+        self.scene.add_box("table", p, (0.510, 1.000, 0.001))
+
+    ###################################################
+    ############## Movements Methods ##################
+    ###################################################
+
+    def go_to(self, x_p, y_p, z_p, roll_rad, pitch_rad, yaw_rad, right=True):
+        """Set end effector position
+
+        Sends a command to MoveIt! to move to the selected position, in any way
+        it sees fit.
+
+        @param x_p: The X-coordinate for the pose
+        @param y_p: The Y-coordinate for the pose
+        @param z_p: The Z-coordinate for the pose
+        @param roll_rad: The roll angle for the pose
+        @param pitch_rad: The pitch angle for the pose
+        @param yaw_rad: The yaw angle for the pose
+        @param right True if the selected arm is the right one
+        @returns None
+        """
+        target = create_pose_euler(x_p, y_p, z_p, roll_rad, pitch_rad, yaw_rad)
+        self.yumi.go_to_pose_goal(target, right=right)
+        self.print_status()
+
+    def go_to_calib(self):
+        """ Moves yumi to its calib position"""
+        self.yumi.go_to_joint_state(CALIB["left"], right=False)
+        self.yumi.go_to_joint_state(CALIB["right"], right=True)
+        self.print_status()
+
+    ###################################################
+    ############### Grippers Methods ##################
+    ###################################################
+
+    def calibrateGrippers(self):
+        """Calibrates Yumi's grippers"""
+        self.yumi.calibrateGrippers()
+
+    def close_gripper(self, right=True):
+        """Close gripper
+
+        Close the selected gripper.
+
+        @param right True if the selected arm is the right one
+        @returns None
+        """
+        self.yumi.effort(0,right=right)
+
+    def open_gripper(self, right=True):
+        """Open gripper
+
+        Open the selected gripper.
+
+        @param right True if the selected arm is the right one
+        @returns None
+        """
+        self.yumi.effort(20,right=right)
+
+def main():
+    try:
+        interface = MoveItInterface()
+        interactive_session(interface)
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+def interactive_session(interface):
+    print("Welcome to this interactive session")
+    print("Follow the instructions to move Yumi.")
+    try:
+        while True:
+            try:
+                code = int(input("What instruction would you like to send Yumi? 0:Move/1:Gripper/2:end "))
+                if(code == 0):
+                    right = int(input("Which arm do you want to move? 0:right/1:left ")) == 0
+                    print("Let's start by giving the position:")
+                    x = float(input("x: "))
+                    y = float(input("y: "))
+                    z = float(input("z: "))
+                    h = int(input("Which lego orientation should Yumi take? 0:horizontal/1:vertical"))
+                    eulers = get_orientation_from_lego_orientation(horizontal = (h == 0))
+                    # eulers = [0,0,0]
+                    roll = eulers[0]
+                    pitch = eulers[1]
+                    yaw = eulers[2]
+                    interface.go_to(x, y, z, roll, pitch, yaw, right=right)
+                elif(code == 1):
+                    right = int(input("Which gripper do you want to use? 0:right/1:left ")) == 0.
+                    if( int(input('0:Open/1:close')) == 0):
+                        interface.open_gripper(right=right)
+                    else:
+                        interface.close_gripper(right=right)
+                else:
+                    print('End of the session')
+                    interface.go_to_calib()
+                    break
+            except Exception:
+                print("ERROR")
+                print('End of the session')
+                interface.go_to_calib()
+                break
+    except KeyboardInterrupt:
+        print('End of the session')
+        interface.go_to_calib()
+
+
+
+if __name__ == "__main__":
+    main()

@@ -47,8 +47,7 @@ Then:
 
     mkdir -p ~/ws_yumi/src && cd ~/ws_yumi/src
     git clone --recursive https://github.com/maxencegrand/yumi.git
-    git clone https://github.com/ros-industrial/abb_driver.git
-    git clone https://github.com/ros-industrial/industrial_core.git
+    
     cd ..
     rosdep install --from-paths src --ignore-src -r -y
 

@@ -179,7 +179,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/moveit_interface.py
   scripts/yumi_utils.py
-  nodes/yumi_motion_api_node.py
+  ##nodes/yumi_motion_api_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
